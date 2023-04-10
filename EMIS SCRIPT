@@ -1,0 +1,28 @@
+import pandas as pd
+import re, json, requests
+from bs4 import BeautifulSoup
+import urllib.request
+from flatten_json import flatten
+
+
+url="https://github.com/emisgroup/exa-data-eng-assessment/tree/main/data"
+response=requests.get(url)
+soup=BeautifulSoup(response.text,'lxml')
+links = []
+for link in soup.findAll('a', attrs={'href': re.compile("json$")}):
+    links.append(link.get('href'))
+s=''.join(str(x) for x in links if x)
+split=s.split(".json")
+splits=[x for x in split if x]
+for item in splits:
+    link1='https://raw.githubusercontent.com/'+item+'.json'
+    full_link=link1.replace('/blob','')
+    webpage=urllib.request.urlopen(full_link)
+    s=BeautifulSoup(webpage.read())
+    text_soup=s.text
+    load_json=json.loads(text_soup)
+    flat_dict=flatten(load_json)
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+        df=pd.DataFrame.from_dict([flat_dict])
+        print(df)
+ 
